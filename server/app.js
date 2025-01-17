@@ -25,26 +25,31 @@ app.get('/musicians', async (req, res, next) => {
     // ?page=XX&size=YY
     // A limit and offset are calculated and added in as keys to the query
     // object.
-    const page = req.query.page === undefined ? 1 : parseInt(req.query.page);
-    const size = req.query.size === undefined ? 5 : parseInt(req.query.size);
-    if (page >= 1 && size >= 1) {
-        query.limit = size;
-        query.offset = size * (page - 1);
-    }
-    
+    let { size, page } = req.query;
+    if (!size) size = 5;
+    if (!page) page = 1;
+
+    query.limit = size;
+    query.offset = size * (page - 1);
 
     // STEP 1: WHERE clauses on the Musician model
     // ?firstName=XX&lastName=YY
     // Add keys to the WHERE clause to match the firstName param, if it exists.
     // End result: { where: { firstName: req.query.firstName } }
+    const { firstName, lastName } = req.query;
+    if (firstName) {
+        query.where = {
+            firstName,
+        }
+    }
 
-    // Your code here 
-    
     // Add keys to the WHERE clause to match the lastName param, if it exists.
     // End result: { where: { lastName: req.query.lastName } }
-    
-    // Your code here 
-
+    if (lastName) {
+        query.where = {
+            lastName,
+        }
+    }
 
     // STEP 2: WHERE clauses on the associated Band model
     // ?bandName=XX
@@ -52,7 +57,15 @@ app.get('/musicians', async (req, res, next) => {
     // name matches the bandName param, if it exists.
     // End result: { include: [{ model: Band, where: { name: req.query.bandName } }] }
 
-    // Your code here 
+    const { bandName } = req.query;
+    if (bandName) {
+        query.include.push({
+            model: Band,
+            where: {
+                name: bandName
+            }
+        });
+    }
 
 
     // STEP 3: WHERE Clauses on the associated Instrument model 
@@ -70,7 +83,18 @@ app.get('/musicians', async (req, res, next) => {
         }] } 
     */
 
-    // Your code here 
+    const { instrumentTypes } = req.query;
+    if (instrumentTypes) {
+        query.include.push({
+            model: Instrument,
+            where: {
+                type: instrumentTypes,
+            },
+            through: {
+                attributes: [],
+            },
+        });
+    }
 
 
     // BONUS STEP 4: Specify Musician attributes to be returned
@@ -137,5 +161,5 @@ app.get('/', (req, res) => {
 });
 
 // Set port and listen for incoming requests - DO NOT MODIFY
-const port = 5000;
+const port = 5500;
 app.listen(port, () => console.log('Server is listening on port', port));
